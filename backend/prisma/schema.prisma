@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  dni       String   @unique
+  email     String   @unique
+  name      String
+  lastName  String
+  role      Role
+  subjectsAsTeacher Subject[] @relation("TeacherSubjects")
+  subjectsAsStudent Subject[] @relation("StudentSubjects")
+  Attendance Attendance[]
+  FaceVector FaceVector[]
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  DIRECTOR
+}
+
+//Agregarle la condicion a los user para que se conecte con subject
+model Subject {
+  id          Int         @id @default(autoincrement())
+  name        String
+  year        Int
+  headquarter Headquarter
+  teacher     User        @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  teacherId   Int
+  students    User[]      @relation("StudentSubjects")
+  Attendance Attendance[]
+}
+
+enum Headquarter {
+  PILAR 
+  CENTRO
+}
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  subjectId  Int
+  timestamp  DateTime @default(now())
+  status     Status
+}
+
+enum Status {
+  PRESENT
+  ABSENT
+}
+
+model FaceVector {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int      @unique
+  descriptor Json     // array con 128 floats del rostro
+  createdAt  DateTime @default(now())
+}
