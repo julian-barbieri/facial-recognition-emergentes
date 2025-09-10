@@ -42,21 +42,13 @@ model Subject {
   teacher     User        @relation("TeacherSubjects", fields: [teacherId], references: [id])
   teacherId   Int
   students    User[]      @relation("StudentSubjects")
-  Attendance Attendance[]
+  // 1 Subject -> muchas Class
+  classes     Class[]
 }
 
 enum Headquarter {
   PILAR 
   CENTRO
-}
-model Attendance {
-  id         Int      @id @default(autoincrement())
-  student    User     @relation(fields: [studentId], references: [id])
-  studentId  Int
-  subject    Subject  @relation(fields: [subjectId], references: [id])
-  subjectId  Int
-  timestamp  DateTime @default(now())
-  status     Status
 }
 
 enum Status {
@@ -70,4 +62,23 @@ model FaceVector {
   userId     Int      @unique
   descriptor Json     // array con 128 floats del rostro
   createdAt  DateTime @default(now())
+}
+
+model Class {
+  id         Int        @id @default(autoincrement())
+  date       DateTime
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+  // FK en el lado "muchas" hacia Subject
+  subjectId  Int
+  // 1 Class -> muchas Attendance (FK vive en Attendance)
+  attendances Attendance[]
+}
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int
+  class    Class  @relation(fields: [classId], references: [id])
+  classId  Int
+  timestamp  DateTime @default(now())
+  status     Status
 }
