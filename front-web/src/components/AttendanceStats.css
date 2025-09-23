@@ -1,0 +1,178 @@
+.attendance-stats {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  height: fit-content;
+}
+
+.attendance-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4aa081;
+  margin: 0;
+}
+
+.attendance-fraction {
+  margin: 0;
+}
+
+.fraction-number {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f5132;
+  line-height: 1;
+  margin: 0;
+}
+
+.fraction-label {
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.attendance-percentage {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.percentage-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  position: relative;
+}
+
+.percentage-circle::before {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  background: white;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.percentage-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #667eea;
+  z-index: 2;
+  position: relative;
+}
+
+.students-list h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.students-container {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.students-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.students-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.students-container::-webkit-scrollbar-thumb {
+  background: #4aa081;
+  border-radius: 3px;
+}
+
+.student-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.student-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateX(5px);
+}
+
+.student-item.present {
+  border-left: 4px solid #4CAF50;
+}
+
+.student-item.absent {
+  border-left: 4px solid #F44336;
+  opacity: 0.7;
+}
+
+.student-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-dot.present {
+  background: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.status-dot.absent {
+  background: #F44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+}
+
+.student-name {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.student-status-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.student-item.present .student-status-text {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.student-item.absent .student-status-text {
+  background: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}

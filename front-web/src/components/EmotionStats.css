@@ -1,0 +1,156 @@
+.emotion-stats {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  height: fit-content;
+}
+
+.stats-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4aa081;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.emotions-container {
+  margin-bottom: 2rem;
+}
+
+.emotion-item {
+  margin-bottom: 1.5rem;
+}
+
+.emotion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.emotion-emoji {
+  font-size: 1.5rem;
+  width: 30px;
+  text-align: center;
+}
+
+.emotion-name {
+  flex: 1;
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.emotion-percentage {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #272523;
+  min-width: 50px;
+  text-align: right;
+}
+
+.emotion-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.emotion-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.8s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.emotion-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.emotion-summary {
+  border-top: 2px solid rgba(102, 126, 234, 0.1);
+  padding-top: 1.5rem;
+}
+
+.emotion-summary h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.emotion-pie-chart {
+  display: flex;
+  justify-content: center;
+}
+
+.pie-chart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  position: relative;
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.pie-chart::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pie-segment {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform-origin: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .emotion-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .emotion-percentage {
+    min-width: auto;
+  }
+  
+  .pie-chart {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .pie-chart::before {
+    width: 50px;
+    height: 50px;
+  }
+}
