@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / Editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs / misc
+*.log
+logs/
+
+# Env files
+.env
+.env.*
+
+# Keep model files tracked (do NOT ignore)
+!faces/*.pkl
