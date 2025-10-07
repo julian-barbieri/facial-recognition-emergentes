@@ -4,6 +4,7 @@ import subjectRoutes from './routes/subject.js';
 import faceVectorRoutes from './routes/faceVector.js';
 import attendanceRoutes from './routes/attendance.js';
 import classRoutes from './routes/class.js';
+import visionRoutes from './routes/vision.js'; 
 
 const app = express();
 app.set("case sensitive routing", true);
@@ -16,6 +17,7 @@ app.use("/api", subjectRoutes);
 app.use("/api", faceVectorRoutes);
 app.use("/api", attendanceRoutes);
 app.use("/api", classRoutes);
+app.use("/api", visionRoutes); 
 
 app.listen(app.get("port"));
 console.log(`server ${app.get("appName")} on port ${app.get("port")}`);
