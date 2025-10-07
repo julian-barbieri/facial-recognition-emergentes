@@ -64,12 +64,19 @@ async def infer_face(image: UploadFile = File(...)):
         except Exception:
             df_list = []
 
-        # Tomamos el mejor match global (top-1) como hacías en tu script
+        # Tomamos el mejor match global (top-1).
+        # Si las imágenes están organizadas como faces/<Persona>/*.jpg,
+        # usamos el nombre de la carpeta como identidad (mejor agrupación).
         def best_identity_from_df_list(dfs):
             try:
                 if isinstance(dfs, list) and len(dfs) > 0 and len(dfs[0]) > 0:
                     identity_path = dfs[0].iloc[0]['identity']
-                    name = os.path.splitext(os.path.basename(identity_path))[0]
+                    folder_name = os.path.basename(os.path.dirname(identity_path))
+                    if folder_name and folder_name != os.path.basename(FACES_DIR):
+                        name = folder_name
+                    else:
+                        # fallback: nombre del archivo sin extensión
+                        name = os.path.splitext(os.path.basename(identity_path))[0]
                     return name
             except Exception:
                 pass
