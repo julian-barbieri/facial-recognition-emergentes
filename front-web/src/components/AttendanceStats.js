@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import './AttendanceStats.css';
 
-const AttendanceStats = () => {
-  // Datos de ejemplo - en una aplicación real estos vendrían de una API
-  const [students] = useState([
-    { id: 1, name: 'Juan Pérez', present: true },
-    { id: 2, name: 'María García', present: true },
-    { id: 3, name: 'Carlos López', present: false },
-    { id: 4, name: 'Ana Martínez', present: true },
-    { id: 5, name: 'Luis Rodríguez', present: true },
-    { id: 6, name: 'Sofia Hernández', present: true },
-    { id: 7, name: 'Diego González', present: false },
-    { id: 8, name: 'Valentina Torres', present: true },
-    { id: 9, name: 'Mateo Silva', present: true },
-    { id: 10, name: 'Isabella Morales', present: true }
-  ]);
+const AttendanceStats = ({ presentNames = [] }) => {
+  // Convertimos nombres en items visuales de "presentes"
+  const students = useMemo(() => {
+    return presentNames.map((name, idx) => ({ id: idx + 1, name, present: true }));
+  }, [presentNames]);
 
-  const presentCount = students.filter(student => student.present).length;
-  const totalCount = students.length;
-  const attendancePercentage = Math.round((presentCount / totalCount) * 100);
+  const presentCount = students.length;
+  const totalCount = Math.max(1, students.length); // evita división por cero si se usa más adelante
 
   return (
     <div className="attendance-stats">

@@ -13,7 +13,7 @@ const upload = multer({
 });
 
 // URL del microservicio FastAPI
-const PY_INFER_URL = process.env.PYTHON_INFER_URL || "http://localhost:8000/v1/infer/face";
+const PY_INFER_URL = process.env.PYTHON_INFER_URL || "http://127.0.0.1:8001/v1/infer/face";
 // Token interno opcional si querés agregar seguridad entre servicios
 const PY_BEARER = process.env.PYTHON_INTERNAL_TOKEN || "";
 

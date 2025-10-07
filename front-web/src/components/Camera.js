@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Camera.css';
 
-const Camera = ({ isExpanded = false, onToggle }) => {
+const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
   const videoRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
@@ -86,6 +86,46 @@ const Camera = ({ isExpanded = false, onToggle }) => {
     };
   }, []);
 
+  const capturarYDetectar = async () => {
+    try {
+      if (!videoRef.current) return;
+
+      const videoEl = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = videoEl.videoWidth || 640;
+      canvas.height = videoEl.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) throw new Error('No se pudo capturar la imagen');
+
+      const form = new FormData();
+      form.append('image', blob, 'frame.jpg');
+
+      const res = await fetch('/api/vision/detect', { method: 'POST', body: form });
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || 'Error en detección');
+
+      // Si el backend devuelve JSON válido, emitir nombres detectados y mostrar en consola
+      try {
+        const json = JSON.parse(text);
+        console.log('Detección:', json);
+        const names = Array.isArray(json?.faces)
+          ? json.faces.map(f => (f && f.name) || '').filter(Boolean)
+          : [];
+        if (names.length) onDetections(names);
+        alert('Detección realizada. Revisa la consola para ver el resultado.');
+      } catch (_) {
+        console.log('Respuesta:', text);
+        alert('Detección realizada. Respuesta de texto en consola.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e.message || 'Error realizando la detección');
+    }
+  };
+
   return (
     <div className="camera-container">
       <div className="camera-wrapper">
@@ -96,6 +136,16 @@ const Camera = ({ isExpanded = false, onToggle }) => {
         >
           {isExpanded ? 'Reducir cámara' : 'Agrandar cámara'}
         </button>
+        {isStreaming && !error && (
+          <button
+            type="button"
+            className="camera-action"
+            onClick={capturarYDetectar}
+            style={{ marginLeft: 8 }}
+          >
+            Detectar rostro
+          </button>
+        )}
         <video
           ref={videoRef}
           autoPlay
