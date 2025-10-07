@@ -111,14 +111,17 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {}, onEmoti
       try {
         const json = JSON.parse(text);
         console.log('Detección:', json);
-        const names = Array.isArray(json?.faces)
-          ? json.faces.map(f => (f && f.name) || '').filter(Boolean)
-          : [];
+        const faces = Array.isArray(json?.faces) ? json.faces : [];
+        // Filtramos sólo rostros conocidos (excluye "Desconocido")
+        const knownFaces = faces.filter(f => {
+          const name = (f && f.name) ? String(f.name).trim().toLowerCase() : '';
+          return name && name !== 'desconocido';
+        });
+
+        const names = knownFaces.map(f => f.name).filter(Boolean);
         if (names.length) onDetections(names);
 
-        const emotions = Array.isArray(json?.faces)
-          ? json.faces.map(f => (f && f.emotion) || '').filter(Boolean)
-          : [];
+        const emotions = knownFaces.map(f => f.emotion).filter(Boolean);
         if (emotions.length) onEmotions(emotions);
       } catch (_) {
         console.log('Respuesta:', text);
@@ -141,14 +144,15 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {}, onEmoti
           {isExpanded ? 'Reducir cámara' : 'Agrandar cámara'}
         </button>
         {isStreaming && !error && (
-          <button
-            type="button"
-            className="camera-action"
-            onClick={capturarYDetectar}
-            style={{ marginLeft: 8 }}
-          >
-            Detectar rostro
-          </button>
+          <div className="camera-detect-container">
+            <button
+              type="button"
+              className="camera-detect-btn"
+              onClick={capturarYDetectar}
+            >
+              Detectar rostro
+            </button>
+          </div>
         )}
         <video
           ref={videoRef}
