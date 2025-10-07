@@ -8,6 +8,6 @@ uvicorn app:app --host 127.0.0.1 --port 8001 --reload
 .venv\Scripts\activate
 
 #Ejecutar comando insertandole una imagen para probar
-curl.exe -F image=@C:\Users\julia\workspace\face-recognition\microservice-ai\faces\julian.jpg http://127.0.0.1:8000/v1/infer/face
+curl.exe -F image=@C:\Users\julia\workspace\face-recognition\microservice-ai\faces\julian.jpg http://127.0.0.1:8001/v1/infer/face
 
 

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Camera.css';
 
-const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
+const Camera = ({ isExpanded = false, onToggle, onDetections = () => {}, onEmotions = () => {} }) => {
   const videoRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
@@ -107,15 +107,22 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
       const text = await res.text();
       if (!res.ok) throw new Error(text || 'Error en detección');
 
-      // Si el backend devuelve JSON válido, emitir nombres detectados y mostrar en consola
+      // Si el backend devuelve JSON válido, emitir nombres y emociones detectadas
       try {
         const json = JSON.parse(text);
         console.log('Detección:', json);
-        const names = Array.isArray(json?.faces)
-          ? json.faces.map(f => (f && f.name) || '').filter(Boolean)
-          : [];
+        const faces = Array.isArray(json?.faces) ? json.faces : [];
+        // Filtramos sólo rostros conocidos (excluye "Desconocido")
+        const knownFaces = faces.filter(f => {
+          const name = (f && f.name) ? String(f.name).trim().toLowerCase() : '';
+          return name && name !== 'desconocido';
+        });
+
+        const names = knownFaces.map(f => f.name).filter(Boolean);
         if (names.length) onDetections(names);
-        alert('Detección realizada. Revisa la consola para ver el resultado.');
+
+        const emotions = knownFaces.map(f => f.emotion).filter(Boolean);
+        if (emotions.length) onEmotions(emotions);
       } catch (_) {
         console.log('Respuesta:', text);
         alert('Detección realizada. Respuesta de texto en consola.');
@@ -137,14 +144,15 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
           {isExpanded ? 'Reducir cámara' : 'Agrandar cámara'}
         </button>
         {isStreaming && !error && (
-          <button
-            type="button"
-            className="camera-action"
-            onClick={capturarYDetectar}
-            style={{ marginLeft: 8 }}
-          >
-            Detectar rostro
-          </button>
+          <div className="camera-detect-container">
+            <button
+              type="button"
+              className="camera-detect-btn"
+              onClick={capturarYDetectar}
+            >
+              Detectar rostro
+            </button>
+          </div>
         )}
         <video
           ref={videoRef}
