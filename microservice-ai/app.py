@@ -38,6 +38,34 @@ def healthz():
     # También verificamos que exista la carpeta con caras de referencia
     return {"status": "ok", "faces_dir": FACES_DIR, "faces_dir_exists": os.path.isdir(FACES_DIR)}
 
+@app.get("/v1/identities")
+def list_identities():
+    """Lista identidades conocidas según el contenido de FACES_DIR.
+    - Si hay subcarpetas, cada carpeta es una identidad.
+    - Si no hay subcarpetas, usa los nombres de archivo (sin extensión).
+    """
+    try:
+        if not os.path.isdir(FACES_DIR):
+            return JSONResponse({"identities": []})
+
+        entries = [os.path.join(FACES_DIR, e) for e in os.listdir(FACES_DIR)]
+        folder_identities = [os.path.basename(p) for p in entries if os.path.isdir(p)]
+        if folder_identities:
+            return JSONResponse({"identities": sorted(list(set(folder_identities)))})
+
+        # fallback: archivos sueltos (solo extensiones de imagen)
+        IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}
+        file_identities = []
+        for p in entries:
+            if os.path.isfile(p):
+                base = os.path.basename(p)
+                name, ext = os.path.splitext(base)
+                if ext.lower() in IMAGE_EXTS and name:
+                    file_identities.append(name)
+        return JSONResponse({"identities": sorted(list(set(file_identities)))})
+    except Exception as e:
+        return JSONResponse({"identities": [], "error": str(e)}, status_code=500)
+
 @app.post("/v1/infer/face")
 async def infer_face(image: UploadFile = File(...)):
     """

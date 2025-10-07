@@ -1,14 +1,19 @@
 import React, { useMemo } from 'react';
 import './AttendanceStats.css';
 
-const AttendanceStats = ({ presentNames = [] }) => {
-  // Convertimos nombres en items visuales de "presentes"
+const AttendanceStats = ({ allNames = [], presentNames = [] }) => {
+  // Construye la lista completa con estado presente/ausente
   const students = useMemo(() => {
-    return presentNames.map((name, idx) => ({ id: idx + 1, name, present: true }));
-  }, [presentNames]);
+    const presentSet = new Set(presentNames.map(n => String(n || '').trim()));
+    return allNames.map((name, idx) => ({
+      id: idx + 1,
+      name,
+      present: presentSet.has(String(name || '').trim())
+    }));
+  }, [allNames, presentNames]);
 
-  const presentCount = students.length;
-  const totalCount = Math.max(1, students.length); // evita división por cero si se usa más adelante
+  const presentCount = students.filter(s => s.present).length;
+  const totalCount = students.length; // total debe reflejar el roster completo
 
   return (
     <div className="attendance-stats">

@@ -14,6 +14,7 @@ const upload = multer({
 
 // URL del microservicio FastAPI
 const PY_INFER_URL = process.env.PYTHON_INFER_URL || "http://127.0.0.1:8001/v1/infer/face";
+const PY_IDENTITIES_URL = process.env.PYTHON_IDENTITIES_URL || PY_INFER_URL.replace(/\/v1\/infer\/face$/, '/v1/identities');
 // Token interno opcional si querés agregar seguridad entre servicios
 const PY_BEARER = process.env.PYTHON_INTERNAL_TOKEN || "";
 
@@ -53,3 +54,18 @@ router.post("/vision/detect", upload.single("image"), async (req, res) => {
 });
 
 export default router;
+
+// Listar identidades conocidas (proxy a microservicio)
+router.get("/vision/identities", async (_req, res) => {
+  try {
+    const headers = {};
+    if (PY_BEARER) headers["Authorization"] = `Bearer ${PY_BEARER}`;
+    const r = await fetch(PY_IDENTITIES_URL, { headers, timeout: 10000 });
+    const text = await r.text();
+    if (!r.ok) return res.status(r.status).json({ error: text });
+    res.type("application/json").send(text);
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: "Servicio de identidades no disponible" });
+  }
+});

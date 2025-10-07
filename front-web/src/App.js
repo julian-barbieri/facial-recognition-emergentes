@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Camera from './components/Camera';
 import AttendanceStats from './components/AttendanceStats';
@@ -7,6 +7,7 @@ import EmotionStats from './components/EmotionStats';
 function App() {
   const [isCameraExpanded, setIsCameraExpanded] = useState(false);
   const [presentStudents, setPresentStudents] = useState([]); // lista de nombres detectados
+  const [allStudents, setAllStudents] = useState([]); // roster completo
   const [emotionCounts, setEmotionCounts] = useState({
     happiness: 0,
     neutrality: 0,
@@ -17,6 +18,23 @@ function App() {
   });
 
   const toggleCameraSize = () => setIsCameraExpanded(prev => !prev);
+
+  // Cargar roster desde backend al inicio
+  useEffect(() => {
+    const loadRoster = async () => {
+      try {
+        const r = await fetch('/api/vision/identities');
+        if (!r.ok) throw new Error(await r.text());
+        const json = await r.json();
+        const names = Array.isArray(json?.identities) ? json.identities : [];
+        setAllStudents(names);
+      } catch (e) {
+        console.error('Error cargando roster', e);
+        setAllStudents([]);
+      }
+    };
+    loadRoster();
+  }, []);
 
   const handleDetections = (names = []) => {
     // normalizar nombres, quitar duplicados y actualizar presentes
@@ -98,7 +116,7 @@ function App() {
           <section className="right-panel">
             <div className="stats-section">
               <div className="stats-container">
-                <AttendanceStats presentNames={presentStudents} />
+                <AttendanceStats allNames={allStudents} presentNames={presentStudents} />
                 <EmotionStats percentages={emotionPercentages} />
               </div>
             </div>
