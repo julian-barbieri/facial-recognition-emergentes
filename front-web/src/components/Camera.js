@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Camera.css';
 
-const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
+const Camera = ({ isExpanded = false, onToggle, onDetections = () => {}, onEmotions = () => {} }) => {
   const videoRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
@@ -107,7 +107,7 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
       const text = await res.text();
       if (!res.ok) throw new Error(text || 'Error en detección');
 
-      // Si el backend devuelve JSON válido, emitir nombres detectados y mostrar en consola
+      // Si el backend devuelve JSON válido, emitir nombres y emociones detectadas
       try {
         const json = JSON.parse(text);
         console.log('Detección:', json);
@@ -115,7 +115,11 @@ const Camera = ({ isExpanded = false, onToggle, onDetections = () => {} }) => {
           ? json.faces.map(f => (f && f.name) || '').filter(Boolean)
           : [];
         if (names.length) onDetections(names);
-        alert('Detección realizada. Revisa la consola para ver el resultado.');
+
+        const emotions = Array.isArray(json?.faces)
+          ? json.faces.map(f => (f && f.emotion) || '').filter(Boolean)
+          : [];
+        if (emotions.length) onEmotions(emotions);
       } catch (_) {
         console.log('Respuesta:', text);
         alert('Detección realizada. Respuesta de texto en consola.');

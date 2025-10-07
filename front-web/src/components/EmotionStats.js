@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './EmotionStats.css';
 
-const EmotionStats = () => {
-  // Datos de ejemplo - en una aplicación real estos vendrían del análisis de la cámara
-  const [emotions] = useState({
-    happiness: 38,
-    neutrality: 28,
-    sadness: 10,
-    anger: 7,
-    surprise: 7,
-    fear: 5
-  });
-
+const EmotionStats = ({ percentages = { happiness: 0, neutrality: 0, sadness: 0, anger: 0, surprise: 0, fear: 0 } }) => {
   const emotionsList = [
-    { name: 'Felicidad', value: emotions.happiness, color: '#4CAF50', emoji: '😊' },
-    { name: 'Neutralidad', value: emotions.neutrality, color: '#9E9E9E', emoji: '😐' },
-    { name: 'Tristeza', value: emotions.sadness, color: '#2196F3', emoji: '😢' },
-    { name: 'Enojo', value: emotions.anger, color: '#F44336', emoji: '😠' },
-    { name: 'Sorpresa', value: emotions.surprise, color: '#FF9800', emoji: '😲' },
-    { name: 'Miedo', value: emotions.fear, color: '#673AB7', emoji: '😨' }
+    { name: 'Felicidad', value: percentages.happiness, color: '#4CAF50', emoji: '😊' },
+    { name: 'Neutralidad', value: percentages.neutrality, color: '#9E9E9E', emoji: '😐' },
+    { name: 'Tristeza', value: percentages.sadness, color: '#2196F3', emoji: '😢' },
+    { name: 'Enojo', value: percentages.anger, color: '#F44336', emoji: '😠' },
+    { name: 'Sorpresa', value: percentages.surprise, color: '#FF9800', emoji: '😲' },
+    { name: 'Miedo', value: percentages.fear, color: '#673AB7', emoji: '😨' }
   ];
 
   return (

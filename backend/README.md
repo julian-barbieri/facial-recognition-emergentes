@@ -16,6 +16,6 @@ npm run dev
 #Try endpoint vision
 # while running microservice-ai (see microservice-ai README.md)
 
-curl.exe -F image=@C:\Users\julia\workspace\face-recognition\microservice-ai\faces\julian.jpg http://127.0.0.1:8000/v1/infer/face
+curl.exe -F image=@C:\Users\julia\workspace\face-recognition\microservice-ai\faces\julian.jpg http://127.0.0.1:8001/v1/infer/face
 
 
