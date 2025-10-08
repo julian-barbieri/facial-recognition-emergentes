@@ -15,6 +15,10 @@ FACES_DIR = os.environ.get(
 
 # Para acelerar inferencia: si una imagen es muy grande, la reducimos
 MAX_SIDE = int(os.getenv("MAX_SIDE", "720"))
+# Detector de rostros; intenta primero este y luego cae a otros si no hay caras
+DETECTOR_BACKEND = os.getenv("DETECTOR_BACKEND", "opencv")  # opciones: opencv, retinaface, mtcnn, ssd, yolov8, etc.
+# Factor de reescalado para reintentar detección si no se encuentran rostros
+DETECT_UPSCALE = float(os.getenv("DETECT_UPSCALE", "1.5"))
 
 def read_image_bytes(file_bytes: bytes):
     """Decodifica bytes -> imagen OpenCV (BGR)."""
@@ -80,54 +84,129 @@ async def infer_face(image: UploadFile = File(...)):
         img = cv2.flip(img, 1)            # Efecto espejo (igual que tu script)
         img = resize_if_needed(img, MAX_SIDE)
 
-        # 2) Intentar reconocimiento contra faces/
-        try:
-            df_list = DeepFace.find(
-                img_path=img,
-                db_path=FACES_DIR,
-                detector_backend='opencv',
-                enforce_detection=False,
-                silent=True
+        # 2) Emociones (como en tu script) y regiones por rostro
+        def run_analyze(image_bgr, backend):
+            return DeepFace.analyze(
+                image_bgr,
+                actions=['emotion'],
+                detector_backend=backend,
+                enforce_detection=False
             )
-        except Exception:
-            df_list = []
 
-        # Tomamos el mejor match global (top-1).
-        # Si las imágenes están organizadas como faces/<Persona>/*.jpg,
-        # usamos el nombre de la carpeta como identidad (mejor agrupación).
-        def best_identity_from_df_list(dfs):
-            try:
-                if isinstance(dfs, list) and len(dfs) > 0 and len(dfs[0]) > 0:
-                    identity_path = dfs[0].iloc[0]['identity']
-                    folder_name = os.path.basename(os.path.dirname(identity_path))
-                    if folder_name and folder_name != os.path.basename(FACES_DIR):
-                        name = folder_name
-                    else:
-                        # fallback: nombre del archivo sin extensión
-                        name = os.path.splitext(os.path.basename(identity_path))[0]
-                    return name
-            except Exception:
-                pass
-            return "Desconocido"
-
-        name_global = best_identity_from_df_list(df_list)
-
-        # 3) Emociones (como en tu script)
-        emo_results = DeepFace.analyze(
-            img,
-            actions=['emotion'],
-            detector_backend='opencv',
-            enforce_detection=False
-        )
+        # Primer intento con backend configurado
+        emo_results = run_analyze(img, DETECTOR_BACKEND)
 
         # DeepFace a veces devuelve dict o list; normalizamos a list
         if not isinstance(emo_results, list):
             emo_results = [emo_results]
 
+        def no_faces_detected(results):
+            if not results:
+                return True
+            # considera "sin rostro" si todas las regiones son 0 o muy pequeñas
+            for a in results:
+                r = (a.get('region') or {})
+                if int(r.get('w', 0)) > 0 and int(r.get('h', 0)) > 0:
+                    return False
+            return True
+
+        # Si no detectó rostros, probamos fallbacks de detector
+        if no_faces_detected(emo_results):
+            fallback_backends = []
+            if DETECTOR_BACKEND != 'retinaface':
+                fallback_backends.append('retinaface')
+            if DETECTOR_BACKEND != 'mtcnn':
+                fallback_backends.append('mtcnn')
+
+            tried = [DETECTOR_BACKEND]
+            for fb in fallback_backends:
+                try:
+                    emo_results_fb = run_analyze(img, fb)
+                    if not isinstance(emo_results_fb, list):
+                        emo_results_fb = [emo_results_fb]
+                    if not no_faces_detected(emo_results_fb):
+                        emo_results = emo_results_fb
+                        tried.append(fb)
+                        break
+                    tried.append(fb)
+                except Exception:
+                    tried.append(fb)
+
+        # Si aún no hay rostros, reintenta a mayor escala para caras pequeñas
+        if no_faces_detected(emo_results) and DETECT_UPSCALE and DETECT_UPSCALE > 4.0:
+            h0, w0 = img.shape[:2]
+            up_w = int(w0 * DETECT_UPSCALE)
+            up_h = int(h0 * DETECT_UPSCALE)
+            img_up = cv2.resize(img, (up_w, up_h))
+            emo_results_up = run_analyze(img_up, DETECTOR_BACKEND)
+            if not isinstance(emo_results_up, list):
+                emo_results_up = [emo_results_up]
+            if not no_faces_detected(emo_results_up):
+                # mapeamos las cajas de vuelta a la escala original
+                mapped = []
+                for a in emo_results_up:
+                    r = (a.get('region') or {}).copy()
+                    if r:
+                        r['x'] = int(r.get('x', 0) / DETECT_UPSCALE)
+                        r['y'] = int(r.get('y', 0) / DETECT_UPSCALE)
+                        r['w'] = int(r.get('w', 0) / DETECT_UPSCALE)
+                        r['h'] = int(r.get('h', 0) / DETECT_UPSCALE)
+                        a = a.copy()
+                        a['region'] = r
+                    mapped.append(a)
+                emo_results = mapped
+
+        # Umbral para decidir si un match es confiable (distancia)
+        # Valores típicos DeepFace (cosine) ~0.3-0.5; ajusta según tus datos
+        threshold = float(os.getenv("RECOG_THRESHOLD", "0.9"))
+
+        def infer_identity_for_crop(crop_img):
+            try:
+                df_list_local = DeepFace.find(
+                    img_path=crop_img,
+                    db_path=FACES_DIR,
+                    detector_backend='opencv',  # detecta dentro del recorte
+                    enforce_detection=False,
+                    silent=True
+                )
+            except Exception:
+                df_list_local = []
+
+            try:
+                if isinstance(df_list_local, list) and len(df_list_local) > 0 and len(df_list_local[0]) > 0:
+                    top_row = df_list_local[0].iloc[0]
+                    distance = float(top_row.get('distance', 1.0))
+                    identity_path = top_row.get('identity', '')
+                    if distance <= threshold and identity_path:
+                        folder_name = os.path.basename(os.path.dirname(identity_path))
+                        if folder_name and folder_name != os.path.basename(FACES_DIR):
+                            return folder_name
+                        # fallback: nombre de archivo
+                        return os.path.splitext(os.path.basename(identity_path))[0]
+            except Exception:
+                pass
+            return "Desconocido"
+
+        def clip(val, low, high):
+            return max(low, min(int(val), high))
+
         faces = []
+        h_img, w_img = img.shape[:2]
         for analysis in emo_results:
             region = analysis.get('region', {}) or {}
             x, y, w, h = [int(region.get(k, 0)) for k in ('x', 'y', 'w', 'h')]
+
+            # Padding leve para incluir bordes del rostro
+            pad = 0.15
+            x1 = clip(x - w*pad, 0, w_img - 1)
+            y1 = clip(y - h*pad, 0, h_img - 1)
+            x2 = clip(x + w*(1+pad), 0, w_img)
+            y2 = clip(y + h*(1+pad), 0, h_img)
+
+            crop = img[y1:y2, x1:x2]
+
+            # Identidad por rostro usando el recorte
+            name_local = infer_identity_for_crop(crop)
 
             emotion = analysis.get('dominant_emotion')
             emo_scores = analysis.get('emotion', {}) or {}
@@ -135,7 +214,7 @@ async def infer_face(image: UploadFile = File(...)):
 
             faces.append({
                 "box": [x, y, w, h],
-                "name": name_global if name_global else "Desconocido",
+                "name": name_local,
                 "emotion": str(emotion) if emotion else None,
                 "emotion_confidence": float(confidence_emotion) if confidence_emotion is not None else None
             })
